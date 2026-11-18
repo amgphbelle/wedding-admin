@@ -33,7 +33,10 @@
     <section id="dash" class="dash" hidden>
       <div class="dash-head">
         <div>
-          <h1>Responses</h1>
+          <nav class="views" aria-label="Views">
+            <button type="button" class="view-btn is-on" data-view="responses">Responses</button>
+            <button type="button" class="view-btn" data-view="activity">Activity</button>
+          </nav>
           <p class="meta" id="meta"></p>
         </div>
         <div class="head-actions">
@@ -41,6 +44,8 @@
           <button type="button" class="btn" id="csv">Download CSV</button>
         </div>
       </div>
+
+      <div id="view-responses">
 
       <div class="stats" id="stats"></div>
       <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
@@ -59,7 +64,31 @@
       </div>
       <p class="count" id="count"></p>
       <div id="list" class="list"></div>
+      </div>
+
+      <div id="view-activity" hidden>
+        <div class="toolbar">
+          <input type="search" id="feed-search" placeholder="Search names, codes, messages…" aria-label="Search activity">
+          <div class="filters" aria-label="Show">
+            <button type="button" class="chip feed-chip is-on" data-feed="all">All</button>
+            <button type="button" class="chip feed-chip" data-feed="rsvp">RSVPs &amp; changes</button>
+            <button type="button" class="chip feed-chip" data-feed="visit">Visits</button>
+          </div>
+        </div>
+        <p class="count" id="feed-count"></p>
+        <div id="feed" class="feed"></div>
+      </div>
     </section>
+
+    <div id="history" class="modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="history-title">
+        <div class="modal-head">
+          <div><h2 id="history-title"></h2><p class="meta" id="history-meta"></p></div>
+          <button type="button" class="modal-close" id="history-close" aria-label="Close">×</button>
+        </div>
+        <div id="history-body" class="feed"></div>
+      </div>
+    </div>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
