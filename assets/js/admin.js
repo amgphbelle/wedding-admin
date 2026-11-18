@@ -202,7 +202,7 @@
 
   function setFilter(f) {
     filter = f;
-    document.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('is-on', c.getAttribute('data-filter') === f); });
+    document.querySelectorAll('.chip[data-filter]').forEach(function (c) { c.classList.toggle('is-on', c.getAttribute('data-filter') === f); });
     renderList();
   }
 
@@ -331,7 +331,7 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('history').hidden) closeHistory(); });
     $('csv').addEventListener('click', csv);
     $('search').addEventListener('input', function (e) { query = e.target.value.trim(); renderList(); });
-    document.querySelectorAll('.chip').forEach(function (c) { c.addEventListener('click', function () { setFilter(c.getAttribute('data-filter')); }); });
+    document.querySelectorAll('.chip[data-filter]').forEach(function (c) { c.addEventListener('click', function () { setFilter(c.getAttribute('data-filter')); }); });
 
     if (API.isDemo) {
       $('signin-help').textContent = 'Demo mode: sample data, no Google account needed. Add your Apps Script URL and Google client ID in config.js to go live.';
