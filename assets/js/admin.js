@@ -90,7 +90,11 @@
   /* ---------------- dashboard ---------------- */
   function statusOf(inv) {
     if (!inv.response) return 'wait';
-    return inv.response.guests.some(function (g) { return g.attending === 'yes'; }) ? 'yes' : 'no';
+    var y = countOf(inv, 'yes'), n = inv.response.guests.length;
+    return y === n ? 'yes' : y === 0 ? 'no' : 'mixed';
+  }
+  function countOf(inv, val) {
+    return inv.response ? inv.response.guests.filter(function (g) { return g.attending === val; }).length : 0;
   }
 
   function render() {
@@ -123,8 +127,8 @@
       return a.party.localeCompare(b.party);
     }).filter(function (inv) {
       var st = statusOf(inv);
-      if (filter === 'yes' && st !== 'yes') return false;
-      if (filter === 'no' && st !== 'no') return false;
+      if (filter === 'yes' && !countOf(inv, 'yes')) return false;      // anyone attending (incl. split invitations)
+      if (filter === 'no' && !countOf(inv, 'no')) return false;        // anyone declining (incl. split invitations)
       if (filter === 'wait' && (st !== 'wait' || !inv.active)) return false;
       if (filter === 'msg' && !(inv.response && inv.response.message)) return false;
       if (!q) return true;
@@ -133,7 +137,15 @@
         .join(' ').toLowerCase();
       return hay.indexOf(q) >= 0;
     });
-    $('count').textContent = items.length + (items.length === 1 ? ' invitation' : ' invitations');
+    var people = items.reduce(function (sum, inv) {
+      if (filter === 'yes') return sum + countOf(inv, 'yes');
+      if (filter === 'no') return sum + countOf(inv, 'no');
+      if (filter === 'wait') return sum + inv.invited.length;
+      return sum;
+    }, 0);
+    var what = { yes: ' attending', no: ' declined', wait: ' awaiting reply' }[filter];
+    $('count').textContent = items.length + (items.length === 1 ? ' invitation' : ' invitations') +
+      (what ? ' · ' + people + (people === 1 ? ' person' : ' people') + what : '');
     var list = $('list'); list.innerHTML = '';
     if (!items.length) { list.appendChild(el('p', { class: 'empty', text: 'Nothing here yet.' })); return; }
     items.forEach(function (inv) { list.appendChild(card(inv)); });
@@ -143,12 +155,14 @@
     var st = statusOf(inv), r = inv.response;
     var guests = (r ? r.guests : inv.invited.map(function (n) { return { name: n, attending: '' }; })).map(function (g) {
       var cls = g.attending === 'yes' ? 'g-yes' : g.attending === 'no' ? 'g-no' : 'g-wait';
+      if ((filter === 'yes' || filter === 'no') && g.attending !== filter) cls += ' g-dim';
       var mark = g.attending === 'yes' ? '✓' : g.attending === 'no' ? '✕' : '…';
       return el('li', { class: cls }, [el('span', { class: 'mark', 'aria-hidden': 'true', text: mark }), el('span', { text: g.name }),
         el('span', { class: 'sr-only', text: g.attending === 'yes' ? ' attending' : g.attending === 'no' ? ' declined' : ' no reply yet' })]);
     });
     var url = link(inv.code);
-    var label = !inv.active ? 'Switched off' : st === 'yes' ? 'Attending' : st === 'no' ? 'Declined' : 'Awaiting reply';
+    var label = !inv.active ? 'Switched off' : st === 'yes' ? 'Attending' : st === 'no' ? 'Declined'
+      : st === 'mixed' ? countOf(inv, 'yes') + ' of ' + inv.response.guests.length + ' attending' : 'Awaiting reply';
     return el('article', { class: 'inv inv-' + st + (inv.active ? '' : ' inv-off') }, [
       el('div', { class: 'inv-head' }, [
         el('div', {}, [el('h2', { text: inv.party }), el('span', { class: 'code', text: inv.code })]),
