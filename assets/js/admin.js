@@ -131,6 +131,8 @@
       if (filter === 'no' && !countOf(inv, 'no')) return false;        // anyone declining (incl. split invitations)
       if (filter === 'wait' && (st !== 'wait' || !inv.active)) return false;
       if (filter === 'msg' && !(inv.response && inv.response.message)) return false;
+      if (filter === 'opened' && (st !== 'wait' || !inv.visits || !inv.active)) return false;   // opened, no reply
+      if (filter === 'unopened' && (st !== 'wait' || inv.visits || !inv.active)) return false;  // not opened yet
       if (!q) return true;
       var hay = [inv.party, inv.code].concat(inv.invited)
         .concat(inv.response ? inv.response.guests.map(function (g) { return g.name; }).concat([inv.response.message, inv.response.email]) : [])
@@ -140,10 +142,10 @@
     var people = items.reduce(function (sum, inv) {
       if (filter === 'yes') return sum + countOf(inv, 'yes');
       if (filter === 'no') return sum + countOf(inv, 'no');
-      if (filter === 'wait') return sum + inv.invited.length;
+      if (filter === 'wait' || filter === 'opened' || filter === 'unopened') return sum + inv.invited.length;
       return sum;
     }, 0);
-    var what = { yes: ' attending', no: ' declined', wait: ' awaiting reply' }[filter];
+    var what = { yes: ' attending', no: ' declined', wait: ' awaiting reply', opened: ' awaiting reply', unopened: ' awaiting reply' }[filter];
     $('count').textContent = items.length + (items.length === 1 ? ' invitation' : ' invitations') +
       (what ? ' · ' + people + (people === 1 ? ' person' : ' people') + what : '');
     var list = $('list'); list.innerHTML = '';
@@ -171,10 +173,16 @@
       el('ul', { class: 'guests' }, guests),
       r && r.message ? el('blockquote', { text: r.message }) : null,
       el('div', { class: 'inv-foot' }, [
-        el('span', { class: 'foot-meta', text: [r && r.email, r && r.updated ? 'Replied ' + fmtDate(r.updated) : 'No reply yet'].filter(Boolean).join(' · ') }),
+        el('span', { class: 'foot-meta' }, [
+          [r && r.email, r && r.updated ? 'Replied ' + fmtDate(r.updated) : 'No reply yet'].filter(Boolean).join(' · '),
+          el('br'),
+          el('span', { class: 'visits', text: inv.visits
+            ? 'Opened ' + inv.visits.count + (inv.visits.count === 1 ? ' time' : ' times') + ' · last ' + fmtDate(inv.visits.last)
+            : 'Not opened yet' })
+        ]),
         url ? el('span', { class: 'foot-actions' }, [
           el('button', { type: 'button', class: 'link', text: 'Copy link', onclick: function () { copy(url); } }),
-          el('a', { class: 'link', href: url, target: '_blank', rel: 'noopener', text: 'Open' })
+          el('a', { class: 'link', href: url + '&preview=1', target: '_blank', rel: 'noopener', text: 'Open', title: 'Preview (not counted as a visit)' })
         ]) : null
       ])
     ]);
@@ -197,13 +205,14 @@
   }
 
   function csv() {
-    var rows = [['Party', 'Code', 'Guest', 'Attending', 'Email', 'Message', 'Replied', 'Personal link']];
+    var rows = [['Party', 'Code', 'Guest', 'Attending', 'Email', 'Message', 'Replied', 'Times opened', 'Last opened', 'Personal link']];
     data.invitations.forEach(function (inv) {
       var r = inv.response;
       var guests = r ? r.guests : inv.invited.map(function (n) { return { name: n, attending: '' }; });
       guests.forEach(function (g) {
         rows.push([inv.party, inv.code, g.name, g.attending === 'yes' ? 'Yes' : g.attending === 'no' ? 'No' : 'Awaiting',
-          r ? r.email : '', r ? r.message : '', r ? fmtDate(r.updated) : '', link(inv.code)]);
+          r ? r.email : '', r ? r.message : '', r ? fmtDate(r.updated) : '',
+          inv.visits ? inv.visits.count : 0, inv.visits ? fmtDate(inv.visits.last) : '', link(inv.code)]);
       });
     });
     var text = rows.map(function (row) {
