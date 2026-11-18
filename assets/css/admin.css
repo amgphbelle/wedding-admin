@@ -84,7 +84,8 @@ main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
 .g-dim { opacity: .38; }
 blockquote { margin: 0; padding: 8px 12px; background: #FBF6F4; border-left: 2px solid var(--gold); font-style: italic; color: #4c3b3e; white-space: pre-wrap; overflow-wrap: anywhere; }
 .inv-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: auto; }
-.foot-actions { display: flex; gap: 12px; }
+.foot-actions { display: flex; gap: 12px; align-items: flex-end; }
+.visits { font-size: 12px; }
 .empty { color: var(--muted); }
 
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 9px 16px;
