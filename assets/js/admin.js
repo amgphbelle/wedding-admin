@@ -5,6 +5,7 @@
   var TOKEN_KEY = 'wedding-admin-token';
   var $ = function (id) { return document.getElementById(id); };
   var data = null, filter = 'all', query = '';
+  var activity = null, feedFilter = 'all', feedQuery = '', view = 'responses';
 
   function el(tag, attrs, kids) {
     var n = document.createElement(tag);
@@ -181,6 +182,7 @@
             : 'Not opened yet' })
         ]),
         url ? el('span', { class: 'foot-actions' }, [
+          el('button', { type: 'button', class: 'link', text: 'History', onclick: function () { openHistory(inv.code, inv.party); } }),
           el('button', { type: 'button', class: 'link', text: 'Copy link', onclick: function () { copy(url); } }),
           el('a', { class: 'link', href: url + '&preview=1', target: '_blank', rel: 'noopener', text: 'Open', title: 'Preview (not counted as a visit)' })
         ]) : null
@@ -226,13 +228,107 @@
     document.body.appendChild(a); a.click(); a.remove();
   }
 
+  /* ---------------- activity & history ---------------- */
+  function token() {
+    if (API.isDemo) return 'demo';
+    try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function showView(v) {
+    view = v;
+    document.querySelectorAll('.view-btn').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-view') === v); });
+    $('view-responses').hidden = v !== 'responses';
+    $('view-activity').hidden = v !== 'activity';
+    $('csv').hidden = v !== 'responses';
+    if (v === 'activity') loadActivity();
+  }
+
+  function loadActivity(quiet) {
+    if (!quiet) { $('feed').innerHTML = ''; $('feed').appendChild(el('p', { class: 'empty', text: 'Loading activity…' })); }
+    return API.activity(token()).then(function (res) {
+      if (!res.ok) { $('feed').innerHTML = ''; $('feed').appendChild(el('p', { class: 'empty', text: errorText(res) })); return; }
+      activity = res; renderFeed();
+    }).catch(function () { $('feed').innerHTML = ''; $('feed').appendChild(el('p', { class: 'empty', text: 'Couldn’t load the activity. Please try again.' })); });
+  }
+
+  function renderFeed() {
+    var q = feedQuery.toLowerCase();
+    var ev = activity.events.filter(function (e) {
+      if (feedFilter !== 'all' && e.type !== feedFilter) return false;
+      if (!q) return true;
+      return [e.party, e.code, e.summary, e.message, e.email].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    var rsvps = ev.filter(function (e) { return e.type === 'rsvp'; }).length;
+    $('feed-count').textContent = rsvps + (rsvps === 1 ? ' RSVP or change' : ' RSVPs & changes') + ' · ' + (ev.length - rsvps) +
+      (ev.length - rsvps === 1 ? ' visit' : ' visits') + (activity.truncated ? ' (showing the most recent)' : '');
+    timeline($('feed'), ev, true);
+  }
+
+  function timeline(box, events, showParty) {
+    box.innerHTML = '';
+    if (!events.length) { box.appendChild(el('p', { class: 'empty', text: 'Nothing here yet.' })); return; }
+    var lastDay = '';
+    events.forEach(function (e) {
+      var d = new Date(e.time), day = isNaN(d) ? '' : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      if (day !== lastDay) { box.appendChild(el('h3', { class: 'feed-day', text: day })); lastDay = day; }
+      var time = isNaN(d) ? '' : d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      var who = showParty
+        ? el('button', { type: 'button', class: 'feed-party', text: e.party || e.code, onclick: function () { openHistory(e.code, e.party); } })
+        : null;
+      var body;
+      if (e.type === 'visit') {
+        body = [who, el('span', { class: 'feed-what', text: showParty ? ' opened their invitation' : 'Opened their invitation' })];
+      } else {
+        var answers = String(e.summary || '').split(/;\s*/).filter(Boolean).map(function (part) {
+          var m = /^(.*):\s*(Yes|No)$/i.exec(part.trim()), yes = m && /yes/i.test(m[2]);
+          return el('span', { class: 'ans ' + (m ? (yes ? 'ans-yes' : 'ans-no') : '') }, [m ? m[1] + (yes ? ' ✓' : ' ✕') : part]);
+        });
+        body = [who, el('span', { class: 'feed-what', text: (showParty ? ' ' : '') + (/updated/i.test(e.kind) ? 'changed their RSVP' : 'sent their RSVP') }),
+          el('div', { class: 'ans-row' }, answers),
+          e.message ? el('blockquote', { text: e.message }) : null,
+          e.email ? el('div', { class: 'feed-email', text: e.email }) : null];
+      }
+      box.appendChild(el('div', { class: 'feed-item feed-' + e.type }, [
+        el('span', { class: 'feed-time', text: time }),
+        el('span', { class: 'feed-dot', 'aria-hidden': 'true' }),
+        el('div', { class: 'feed-body' }, body)
+      ]));
+    });
+  }
+
+  function openHistory(code, party) {
+    $('history-title').textContent = party || code;
+    $('history-meta').textContent = code + ' · loading…';
+    $('history-body').innerHTML = '';
+    $('history').hidden = false; document.body.classList.add('no-scroll');
+    API.activity(token(), code).then(function (res) {
+      if (!res.ok) { $('history-meta').textContent = errorText(res); return; }
+      var r = res.events.filter(function (e) { return e.type === 'rsvp'; }).length, v = res.events.length - r;
+      $('history-meta').textContent = code + ' · ' + r + (r === 1 ? ' RSVP or change' : ' RSVPs & changes') + ' · ' + v + (v === 1 ? ' visit' : ' visits');
+      timeline($('history-body'), res.events, false);
+    }).catch(function () { $('history-meta').textContent = 'Couldn’t load the history. Please try again.'; });
+  }
+  function closeHistory() { $('history').hidden = true; document.body.classList.remove('no-scroll'); }
+
   /* ---------------- start ---------------- */
   function init() {
     $('signout').addEventListener('click', signOut);
     $('refresh').addEventListener('click', function () {
-      var tok = ''; try { tok = sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
-      fetchData(API.isDemo ? 'demo' : tok, true);
+      fetchData(token(), true);
+      if (view === 'activity') loadActivity(true);
     });
+    document.querySelectorAll('.view-btn').forEach(function (b) { b.addEventListener('click', function () { showView(b.getAttribute('data-view')); }); });
+    document.querySelectorAll('.feed-chip').forEach(function (c) {
+      c.addEventListener('click', function () {
+        feedFilter = c.getAttribute('data-feed');
+        document.querySelectorAll('.feed-chip').forEach(function (x) { x.classList.toggle('is-on', x === c); });
+        if (activity) renderFeed();
+      });
+    });
+    $('feed-search').addEventListener('input', function (e) { feedQuery = e.target.value.trim(); if (activity) renderFeed(); });
+    $('history-close').addEventListener('click', closeHistory);
+    $('history').addEventListener('click', function (e) { if (e.target === $('history')) closeHistory(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('history').hidden) closeHistory(); });
     $('csv').addEventListener('click', csv);
     $('search').addEventListener('input', function (e) { query = e.target.value.trim(); renderList(); });
     document.querySelectorAll('.chip').forEach(function (c) { c.addEventListener('click', function () { setFilter(c.getAttribute('data-filter')); }); });
