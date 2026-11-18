@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RSVP Dashboard · Paolo &amp; Margaret</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#F5F0F0">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Pinyon+Script&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="assets/img/monogram.png" alt="" width="40" height="40"><span>RSVP Dashboard</span></div>
+    <div class="who" id="who" hidden><span id="who-email"></span><button type="button" class="link" id="signout">Sign out</button></div>
+  </header>
+
+  <main>
+    <section id="signin" class="signin">
+      <img src="assets/img/monogram.png" alt="P and M monogram" width="120" height="120">
+      <h1>Paolo &amp; Margaret</h1>
+      <p class="sub">RSVP dashboard</p>
+      <p id="signin-help">Sign in with a Google account listed on the Admins tab of your Sheet.</p>
+      <div id="gsi-button" class="gsi"></div>
+      <button type="button" class="btn" id="demo-signin" hidden>Demo sign-in</button>
+      <p id="signin-msg" class="msg" role="alert"></p>
+    </section>
+
+    <section id="dash" class="dash" hidden>
+      <div class="dash-head">
+        <div>
+          <h1>Responses</h1>
+          <p class="meta" id="meta"></p>
+        </div>
+        <div class="head-actions">
+          <button type="button" class="btn btn-ghost" id="refresh">Refresh</button>
+          <button type="button" class="btn" id="csv">Download CSV</button>
+        </div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+      <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+      <div class="toolbar">
+        <input type="search" id="search" placeholder="Search names, codes, messages…" aria-label="Search">
+        <div class="filters" role="tablist" aria-label="Filter">
+          <button type="button" class="chip is-on" data-filter="all">All</button>
+          <button type="button" class="chip" data-filter="yes">Attending</button>
+          <button type="button" class="chip" data-filter="no">Declined</button>
+          <button type="button" class="chip" data-filter="wait">Awaiting reply</button>
+          <button type="button" class="chip" data-filter="msg">With message</button>
+        </div>
+      </div>
+      <p class="count" id="count"></p>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/demo-data.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
