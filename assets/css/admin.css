@@ -43,6 +43,34 @@ main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
 .dash-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .dash-head h1 { font-family: var(--serif); font-weight: 600; font-size: 34px; margin: 0; color: var(--burgundy); }
 .meta { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.views { display: flex; gap: 22px; }
+.view-btn { font-family: var(--serif); font-weight: 600; font-size: 32px; color: #B8A9AB; background: none; border: 0; padding: 0 0 2px; cursor: pointer;
+  border-bottom: 2px solid transparent; line-height: 1.1; }
+.view-btn.is-on { color: var(--burgundy); border-bottom-color: var(--burgundy); }
+
+/* activity feed + history */
+.feed { display: flex; flex-direction: column; }
+.feed-day { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-deep); margin: 18px 0 6px; font-weight: 600; }
+.feed-day:first-child { margin-top: 4px; }
+.feed-item { display: grid; grid-template-columns: 74px 14px 1fr; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.feed-time { color: var(--muted); font-size: 13px; text-align: right; padding-top: 1px; }
+.feed-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 6px; background: #C9BEBF; }
+.feed-rsvp .feed-dot { background: var(--burgundy); }
+.feed-body { min-width: 0; }
+.feed-party { font: inherit; font-weight: 600; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.feed-party:hover { text-decoration-color: var(--burgundy); }
+.feed-visit .feed-what { color: var(--muted); }
+.ans-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ans { font-size: 13px; padding: 2px 9px; border-radius: 999px; background: #F1ECEC; }
+.ans-yes { background: rgba(62,125,90,.12); color: #2f6448; } .ans-no { background: rgba(178,60,60,.1); color: #9a3434; }
+.feed-body blockquote { margin-top: 8px; }
+.feed-email { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.modal { position: fixed; inset: 0; z-index: 40; background: rgba(40, 20, 24, .45); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; overflow: auto; }
+.modal-card { background: var(--card); width: min(640px, 100%); border: 1px solid var(--line); box-shadow: 0 30px 80px -30px rgba(0,0,0,.5); padding: 20px 22px 14px; }
+.modal-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 4px; }
+.modal-head h2 { font-family: var(--serif); font-size: 26px; margin: 0; color: var(--burgundy); }
+.modal-close { font-size: 30px; line-height: 1; background: none; border: 0; cursor: pointer; color: var(--muted); }
+.no-scroll { overflow: hidden; }
 .head-actions { display: flex; gap: 8px; }
 
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0 10px; }
@@ -95,6 +123,8 @@ blockquote { margin: 0; padding: 8px 12px; background: #FBF6F4; border-left: 2px
 @media (max-width: 720px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
   .dash-head h1 { font-size: 28px; }
+  .view-btn { font-size: 26px; }
+  .feed-item { grid-template-columns: 58px 12px 1fr; gap: 8px; }
   .brand span { font-size: 18px; }
   .who #who-email { display: none; }
 }
